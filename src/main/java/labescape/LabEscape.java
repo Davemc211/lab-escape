@@ -38,14 +38,16 @@ public class LabEscape {
     private static final String MAIN_MENU_OPTION_EXIT = "X";
     private static final String MAIN_MENU_OPTION_GET = "G";
     private static final String MAIN_MENU_OPTION_OPEN = "O";
-    private static final String MAIN_OPTIONS_MENU_BUY = "B";
+    private static final String MAIN_MENU_OPTIONS_BUY = "B";
+    private static final String MAIN_MENU_OPTIONS_ATTACK = "A";
 
 
 
     private static final Object[] MAIN_MENU_OPTIONS = new Object[] { MAIN_MENU_OPTION_LOOK,
             MAIN_MENU_OPTION_INVENTORY, MAIN_MENU_OPTION_CHARACTER, MAIN_MENU_OPTION_MAP,
             MAIN_MENU_OPTION_SEARCH, Map.Direction.SOUTH, Map.Direction.EAST,
-            Map.Direction.NORTH, Map.Direction.WEST, MAIN_MENU_OPTION_EXIT, MAIN_MENU_OPTION_GET, MAIN_MENU_OPTION_OPEN, MAIN_OPTIONS_MENU_BUY};
+            Map.Direction.NORTH, Map.Direction.WEST, MAIN_MENU_OPTION_EXIT, MAIN_MENU_OPTION_GET, MAIN_MENU_OPTION_OPEN, MAIN_MENU_OPTIONS_BUY,
+            MAIN_MENU_OPTIONS_ATTACK};
 
     private static final String LOOT_DROP_MENU_OPTION_INSPECT = "I";
     private static final String LOOT_DROP_MENU_OPTION_DESTROY = "D";
@@ -150,9 +152,8 @@ public class LabEscape {
                 checkEnemy(room, player, combat); // checks for enemies in the room
             }
 
-            listPlayerOptions(room);
+            listPlayerOptions(room, player);
 
-            player.setInventory(lootDao.getRandomItem(10));
 
             System.out.println("There appear to be EXITS : ");
             map.getExits().forEach(System.out::println);
@@ -175,18 +176,24 @@ public class LabEscape {
                 roomSearch(room, player);
 
             }
+            else if (choice.equals(MAIN_MENU_OPTIONS_ATTACK)) {
+                checkEnemy(room, player, combat);
+
+            }
             else if (choice.equals(MAIN_MENU_OPTION_MAP)) {
                 map.displayBoard();
 
             }
-            else if (choice.equals(MAIN_OPTIONS_MENU_BUY)) {
+            else if (choice.equals(MAIN_MENU_OPTIONS_BUY)) {
                 vendingMachineCheck(room);
 
-            }else if (choice.equals(MAIN_MENU_OPTION_EXIT)) {
+            }
+            else if (choice.equals(MAIN_MENU_OPTION_EXIT)) {
                 quit = true;
 
             }
             else if (choice.equals(MAIN_MENU_OPTION_GET)) {
+
                 if(room.getFloorItems().size() > 0) {
                     for(Loot loot : room.getFloorItems()) {
                         player.setInventory(loot);
@@ -215,7 +222,9 @@ public class LabEscape {
             vendingMachine.vend();
 
         }
+
         else System.out.println("There's no ValueRep here.");
+
     }
 
 
@@ -234,6 +243,12 @@ public class LabEscape {
             }
         combatants = room.getRoomEnemies();
 
+            if (player.isStealthed()) {
+                player.setInCombat(true);
+                combatMenu(player, combatants, combat, room);
+
+            }
+
         String enemyOutput = "You see : ";
             for(Enemy enemy : combatants){
                 if(enemy.getLevel() > player.getLevel()){
@@ -244,17 +259,17 @@ public class LabEscape {
                 }
 
             }
+
             System.out.println(enemyOutput.substring(0, enemyOutput.length()-8));
 
 
             if(!combat.stealthCheck(player, combatants)){
                 System.out.printf(RED_BOLD_BRIGHT + "\n\n%5s%s"," ", "*****You've been spotted!*****\n");
-                System.out.printf("%5s%s"," ", "******PREPARE FOR COMBAT!*****\n\n" + ANSI_RESET);
                 player.setInCombat(true);
-                pause(3);
                 combatMenu(player, combatants, combat, room);
             }
             else {
+                player.setStealthed(true);
                 System.out.println(" You manage to remain out of sight.... for now.\n");
             }
     }
@@ -338,7 +353,7 @@ public class LabEscape {
             }
 
             else {
-                System.out.println("You already learned this recipe.");
+                System.out.println("You already know how to make " + recipe.getName());
                 quit = true;
             }
 
@@ -391,7 +406,7 @@ public class LabEscape {
         }
     }
 
-    public void listPlayerOptions(Room room){
+    public void listPlayerOptions(Room room, Player player){
 
         System.out.printf(ANSI_YELLOW + "%58s%s","OPTIONS: ", "\n" + ANSI_RESET);
         System.out.printf(ANSI_CYAN + "%9s%s%5s%s|", " ", "**'L' to LOOK **"," ", "--");
@@ -412,6 +427,8 @@ public class LabEscape {
         }if(room.hasVendingMachine()){
             System.out.printf("%35s%s%s%s%s", " ",ANSI_YELLOW+ "--(B) to buy from the vending machine"," ", "--","\n" + ANSI_RESET);
 
+        }if(room.getRoomEnemies().size() > 0 && !player.isInCombat() && player.isStealthed()){
+            System.out.printf("%35s%s%s%s%s", " ",ANSI_RED+ "--(A) to attack while unseen"," ", "--","\n" + ANSI_RESET);
         }
 
     }
@@ -516,7 +533,7 @@ public class LabEscape {
 
                     Recipe craftingChoice = menu.getChoiceCrafting(playerKnownRecipes);
                     if(craftItem(craftingChoice, inventory)){
-                        player.setInventory(lootDao.getSpecificItem(craftingChoice.toString(), 1L)); // adds crafted item
+                        player.setInventory(lootDao.getSpecificItem(craftingChoice.getName(), 1L)); // adds crafted item
                     }
 
                 } else {
@@ -537,7 +554,7 @@ public class LabEscape {
             return true;
         }
         else {
-            System.out.println("You do not have enough material to craft " + craftingChoice);
+            System.out.println("You do not have enough material to craft :\n" + craftingChoice.getName());
             return false;
         }
 
@@ -566,9 +583,25 @@ public class LabEscape {
 
     private void combatMenu(Player player, List<Enemy> enemies, Combat combat, Room room) {
 
+        System.out.printf("%5s%s"," ", "******PREPARE FOR COMBAT!*****\n\n" + ANSI_RESET);
+        pause(3);
+
         while (player.isInCombat()) {
 
+            if(player.isStealthed()){
+
+                Enemy target = (Enemy) menu.getEnemyFromOptions(COMBAT_MENU_OPTIONS, enemies);
+                System.out.println("You spring from the shadows and strike at " + target.getName());
+                combat.stealthAttack(target, player);
+                reportHealth(target);
+
+                if (target.getHp() <= 0) {
+                    enemyDeath(target,enemies,room,player);
+                }
+            }
+
             List<Combatant> turnOrder = combat.turnOrder(player, enemies);
+
 
             System.out.println(ANSI_RED + "*********************************************" + ANSI_RESET);
             System.out.println(ANSI_RED + "**************" + GREEN_BOLD_BRIGHT + "--TURN ORDER--" + ANSI_RED + "*****************\n" + ANSI_RESET);
@@ -608,13 +641,7 @@ public class LabEscape {
 
                         if (target.getHp() <= 0) {
 
-                            enemies.remove(target);
-                            room.setRoomEnemies(enemies);
-                            player.setXP(10);
-                            Loot drop = lootDao.getRandomJunkItem();
-                            System.out.println(target.getName() + " dropped something on the ground.");
-                            room.addFloorItems(drop);
-                            enemyCount++;
+                            enemyDeath(target, enemies, room, player);
 
                             if (enemies.size() == 0) {
                                 player.setInCombat(false);
@@ -653,6 +680,18 @@ public class LabEscape {
                 }
             }
         }
+    }
+
+    private void enemyDeath(Enemy target, List<Enemy> enemies, Room room, Player player) {
+        enemies.remove(target);
+        room.setRoomEnemies(enemies);
+        player.setXP(10);
+        Loot drop = lootDao.getRandomJunkItem();
+        System.out.println(target.getName() + " dropped something on the ground.");
+        room.addFloorItems(drop);
+        enemyCount++;
+
+
     }
 
 

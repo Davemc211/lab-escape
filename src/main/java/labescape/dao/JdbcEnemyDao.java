@@ -4,6 +4,7 @@ package labescape.dao;
 import labescape.model.Enemy;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Constructor;
@@ -12,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-
+@Component
 public class JdbcEnemyDao implements EnemyDao {
 
     private final JdbcTemplate jdbcTemplate;

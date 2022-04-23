@@ -85,7 +85,7 @@ public class Player implements Comparable<Enemy>, Combatant{
     };
 
     private final Random random = new Random();
-    private boolean inCombat;
+    private boolean inCombat, isStealthed;
     private int strength, agility, attackPower, stamina, level, XP, bucks, hp;
     private List<Loot> inventory = new ArrayList<>();
     private List<Recipe> knownRecipes = new ArrayList<>();
@@ -166,6 +166,14 @@ public class Player implements Comparable<Enemy>, Combatant{
 
     public void setInCombat(boolean inCombat) {
         this.inCombat = inCombat;
+    }
+
+    public boolean isStealthed() {
+        return isStealthed;
+    }
+
+    public void setStealthed(boolean stealthed) {
+        isStealthed = stealthed;
     }
 
     public void setLevel(int level) {

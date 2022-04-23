@@ -3,10 +3,13 @@ package labescape.dao;
 import labescape.model.Container;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.util.Random;
 
+
+@Component
 public class JdbcContainerDao implements ContainerDao{
     Container box;
     private final JdbcTemplate jdbcTemplate;

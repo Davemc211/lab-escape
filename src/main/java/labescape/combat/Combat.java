@@ -3,6 +3,7 @@ package labescape.combat;
 import labescape.model.Combatant;
 import labescape.model.Enemy;
 import labescape.model.Player;
+import labescape.model.Room;
 
 import java.util.*;
 
@@ -132,5 +133,12 @@ public class Combat {
         }
 
         return false;
+    }
+
+    public void stealthAttack(Enemy target, Player player) {
+        int damageDone = (player.rollAttackPower() * 2) - (target.rollStrength());
+        target.updateHp(-damageDone);
+        player.setStealthed(false);
+        player.setInCombat(true);
     }
 }
