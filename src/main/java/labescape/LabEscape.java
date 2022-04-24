@@ -236,42 +236,43 @@ public class LabEscape {
     }
 
     private void checkEnemy(Room room, Player player, Combat combat) {
-            List<Enemy> combatants;
+        List<Enemy> combatants;
 
-            if(room.getRoomEnemies().size() == 0) {
-                room.setRoomEnemies(enemyDao.getRandomEnemies(player.getLevel()));//generates list of enemies up to and including the player level
-            }
+        if (room.getRoomEnemies().size() == 0) {
+            room.setRoomEnemies(enemyDao.getRandomEnemies(player.getLevel()));//generates list of enemies up to and including the player level
+        }
         combatants = room.getRoomEnemies();
 
-            if (player.isStealthed()) {
-                player.setInCombat(true);
-                combatMenu(player, combatants, combat, room);
 
-            }
+        if (player.isStealthed()) {
+            player.setInCombat(true);
+            combatMenu(player, combatants, combat, room);
+
+        }
 
         String enemyOutput = "You see : ";
-            for(Enemy enemy : combatants){
-                if(enemy.getLevel() > player.getLevel()){
-                    enemyOutput += "☠" + enemy.getName()+ ", " + ANSI_RESET + "and ";
-                }
-                else {
-                    enemyOutput += enemy.getName()+ ", " + ANSI_RESET + "and ";
-                }
-
+        for(Enemy enemy : combatants){
+            if(enemy.getLevel() > player.getLevel()){
+                enemyOutput += "☠" + enemy.getName()+ ", " + ANSI_RESET + "and ";
             }
 
-            System.out.println(enemyOutput.substring(0, enemyOutput.length()-8));
-
-
-            if(!combat.stealthCheck(player, combatants)){
-                System.out.printf(RED_BOLD_BRIGHT + "\n\n%5s%s"," ", "*****You've been spotted!*****\n");
-                player.setInCombat(true);
-                combatMenu(player, combatants, combat, room);
-            }
             else {
-                player.setStealthed(true);
-                System.out.println(" You manage to remain out of sight.... for now.\n");
+                enemyOutput += enemy.getName()+ ", " + ANSI_RESET + "and ";
             }
+            System.out.println(enemyOutput.substring(0, enemyOutput.length() - 8));
+
+        }
+
+
+        if (!combat.stealthCheck(player, combatants)) {
+            System.out.printf(RED_BOLD_BRIGHT + "\n\n%5s%s", " ", "*****You've been spotted!*****\n");
+            player.setInCombat(true);
+            combatMenu(player, combatants, combat, room);
+        } else {
+            player.setStealthed(true);
+            System.out.println(" You manage to remain out of sight.... for now.\n");
+        }
+
     }
 
 
@@ -583,13 +584,13 @@ public class LabEscape {
 
     private void combatMenu(Player player, List<Enemy> enemies, Combat combat, Room room) {
 
-        System.out.printf("%5s%s"," ", "******PREPARE FOR COMBAT!*****\n\n" + ANSI_RESET);
+        System.out.printf(ANSI_RED + "%5s%s"," ", "******PREPARE FOR COMBAT!*****\n\n" + ANSI_RESET);
         pause(3);
 
         while (player.isInCombat()) {
 
             if(player.isStealthed()){
-
+                player.setStealthed(false);
                 Enemy target = (Enemy) menu.getEnemyFromOptions(COMBAT_MENU_OPTIONS, enemies);
                 System.out.println("You spring from the shadows and strike at " + target.getName());
                 combat.stealthAttack(target, player);
